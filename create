@@ -1,0 +1,269 @@
+#!/bin/bash
+
+# This tool helps to add new components to Express.js projects.
+
+create_feature() {
+    if [ -z "$1" ]
+    then
+        echo "Please provide a feature name"
+        return
+    fi
+
+    if [ -d "src/features/$1" ]
+    then
+        echo "Feature $1 already exists"
+        return
+    fi
+
+    echo "Creating feature $1"
+    mkdir -p src/features/$1/data/models
+    mkdir -p src/features/$1/data/types
+    mkdir -p src/features/$1/logic/handlers
+    mkdir -p src/features/$1/logic/middlewares
+
+    ROUTER_PATH="src/features/$1/$1.router.ts"
+
+    echo "import { Router } from 'express';" >> $ROUTER_PATH
+    echo "" >> $ROUTER_PATH
+    echo "const router = Router();" >> $ROUTER_PATH
+    echo "" >> $ROUTER_PATH
+    echo "router.get('/', (req, res) => {" >> $ROUTER_PATH
+    echo "    res.send('Hello World!');" >> $ROUTER_PATH
+    echo "});" >> $ROUTER_PATH
+    echo "" >> $ROUTER_PATH
+    echo "export default router;" >> $ROUTER_PATH
+    echo "" >> $ROUTER_PATH
+
+    ROUTER_TEST_PATH="src/features/$1/$1.router.test.ts"
+
+    echo "import request from 'supertest';" >> $ROUTER_TEST_PATH
+    echo "import app from '../../app';" >> $ROUTER_TEST_PATH
+    echo "" >> $ROUTER_TEST_PATH
+    echo "describe('GET /$1', () => {" >> $ROUTER_TEST_PATH
+    echo "    it('should return 200 OK', async () => {" >> $ROUTER_TEST_PATH
+    echo "        const result = await request(app).get('/$1');" >> $ROUTER_TEST_PATH
+    echo "        expect(result.status).toEqual(200);" >> $ROUTER_TEST_PATH
+    echo "    });" >> $ROUTER_TEST_PATH
+    echo "});" >> $ROUTER_TEST_PATH
+    echo "" >> $ROUTER_TEST_PATH
+
+    echo "Feature $1 created"
+}
+
+create_middleware() {
+    if [ -z "$1" ]
+    then
+        echo "Please provide the feature name"
+        return
+    fi
+
+    if [ ! -d "src/features/$1" ]
+    then
+        echo "Feature $1 does not exist"
+        return
+    fi
+
+    if [ -z "$2" ]
+    then
+        echo "Please provide the middleware name"
+        return
+    fi
+
+    if [ -f "src/features/$1/logic/middlewares/$2.middleware.ts" ]
+    then
+        echo "Middleware $2 already exists"
+        return
+    fi
+
+    MIDDLEWARE_PATH="src/features/$1/logic/middlewares/$2.middleware.ts"
+
+    echo "Creating middleware $2"
+
+    echo "import { Request, Response, NextFunction } from 'express';" >> $MIDDLEWARE_PATH
+    echo "" >> $MIDDLEWARE_PATH
+    echo "export const $2 = (req: Request, res: Response, next: NextFunction) => {" >> $MIDDLEWARE_PATH
+    echo "    next();" >> $MIDDLEWARE_PATH
+    echo "}" >> $MIDDLEWARE_PATH
+    echo "" >> $MIDDLEWARE_PATH
+    echo "export default $2;" >> $MIDDLEWARE_PATH
+    echo "" >> $MIDDLEWARE_PATH
+
+    MIDDLEWARE_TEST_PATH="src/features/$1/logic/middlewares/$2.middleware.test.ts"
+
+    echo "import { Request, Response, NextFunction } from 'express';" >> $MIDDLEWARE_TEST_PATH
+    echo "import $2 from './$2.middleware';" >> $MIDDLEWARE_TEST_PATH
+    echo "" >> $MIDDLEWARE_TEST_PATH
+    echo "describe('$2', () => {" >> $MIDDLEWARE_TEST_PATH
+    echo "    it('should call next', () => {" >> $MIDDLEWARE_TEST_PATH
+    echo "        const req = {} as Request;" >> $MIDDLEWARE_TEST_PATH
+    echo "        const res = {} as Response;" >> $MIDDLEWARE_TEST_PATH
+    echo "        const next = jest.fn() as NextFunction;" >> $MIDDLEWARE_TEST_PATH
+    echo "" >> $MIDDLEWARE_TEST_PATH
+    echo "        $2(req, res, next);" >> $MIDDLEWARE_TEST_PATH
+    echo "" >> $MIDDLEWARE_TEST_PATH
+    echo "        expect(next).toHaveBeenCalled();" >> $MIDDLEWARE_TEST_PATH
+    echo "    });" >> $MIDDLEWARE_TEST_PATH
+    echo "});" >> $MIDDLEWARE_TEST_PATH
+    echo "" >> $MIDDLEWARE_TEST_PATH
+
+    echo "Middleware $2 created"
+}
+
+create_handler() {
+    if [ -z "$1" ]
+    then
+        echo "Please provide the feature name"
+        return
+    fi
+
+    if [ ! -d "src/features/$1" ]
+    then
+        echo "Feature $1 does not exist"
+        return
+    fi
+
+    if [ -z "$2" ]
+    then
+        echo "Please provide the handler name"
+        return
+    fi
+
+    if [ -f "src/features/$1/logic/handlers/$2.handler.ts" ]
+    then
+        echo "Handler $2 already exists"
+        return
+    fi
+
+    HANDLER_PATH="src/features/$1/logic/handlers/$2.handler.ts"
+
+    echo "Creating handler $2"
+
+    echo "import { Request, Response } from 'express';" >> $HANDLER_PATH
+    echo "" >> $HANDLER_PATH
+    echo "export const $2 = (req: Request, res: Response) => {" >> $HANDLER_PATH
+    echo "    res.send('Hello World!');" >> $HANDLER_PATH
+    echo "}" >> $HANDLER_PATH
+    echo "" >> $HANDLER_PATH
+    echo "export default $2;" >> $HANDLER_PATH
+    echo "" >> $HANDLER_PATH
+
+    HANDLER_TEST_PATH="src/features/$1/logic/handlers/$2.handler.test.ts"
+
+    echo "import { Request, Response } from 'express';" >> $HANDLER_TEST_PATH
+    echo "import $2 from './$2.handler';" >> $HANDLER_TEST_PATH
+    echo "" >> $HANDLER_TEST_PATH
+    echo "describe('$2', () => {" >> $HANDLER_TEST_PATH
+    echo "    it('should return 200 OK', () => {" >> $HANDLER_TEST_PATH
+    echo "        const req = {} as Request;" >> $HANDLER_TEST_PATH
+    echo "        const res = {} as Response;" >> $HANDLER_TEST_PATH
+    echo "" >> $HANDLER_TEST_PATH
+    echo "        $2(req, res);" >> $HANDLER_TEST_PATH
+    echo "" >> $HANDLER_TEST_PATH
+    echo "        expect(res.send).toHaveBeenCalledWith('Hello World!');" >> $HANDLER_TEST_PATH
+    echo "    });" >> $HANDLER_TEST_PATH
+    echo "});" >> $HANDLER_TEST_PATH
+    echo "" >> $HANDLER_TEST_PATH
+
+    echo "Handler $2 created"
+}
+
+create_model() {
+    if [ -z "$1" ]
+    then
+        echo "Please provide the feature name"
+        return
+    fi
+
+    if [ ! -d "src/features/$1" ]
+    then
+        echo "Feature $1 does not exist"
+        return
+    fi
+
+    if [ -z "$2" ]
+    then
+        echo "Please provide the model name"
+        return
+    fi
+
+    if [ -f "src/features/$1/data/models/$2.model.ts" ]
+    then
+        echo "Model $2 already exists"
+        return
+    fi
+
+    MODEL_PATH="src/features/$1/data/models/$2.model.ts"
+
+    echo "Creating model $2"
+
+    echo "export interface $2 {" >> $MODEL_PATH
+    echo "    id: string;" >> $MODEL_PATH
+    echo "}" >> $MODEL_PATH
+    echo "" >> $MODEL_PATH
+
+    echo "Model $2 created"
+}
+
+create_type() {
+    if [ -z "$1" ]
+    then
+        echo "Please provide the feature name"
+        return
+    fi
+
+    if [ ! -d "src/features/$1" ]
+    then
+        echo "Feature $1 does not exist"
+        return
+    fi
+
+    if [ -z "$2" ]
+    then
+        echo "Please provide the type name"
+        return
+    fi
+
+    if [ -f "src/features/$1/data/types/$2.type.ts" ]
+    then
+        echo "Type $2 already exists"
+        return
+    fi
+
+    TYPE_PATH="src/features/$1/data/types/$2.type.ts"
+
+    echo "Creating type $2"
+
+    echo "export type $2 = {" >> $TYPE_PATH
+    echo "    id: string;" >> $TYPE_PATH
+    echo "}" >> $TYPE_PATH
+    echo "" >> $TYPE_PATH
+
+    echo "Type $2 created"
+}
+
+
+if [ -z "$1" ]
+then
+    echo "Please provide a command"
+    exit 1
+fi
+
+
+if [ "$1" = "feature" ]
+then
+    create_feature $2
+elif [ "$1" = "middleware" ]
+then
+    create_middleware $2 $3
+elif [ "$1" = "handler" ]
+then
+    create_handler $2 $3
+elif [ "$1" = "model" ]
+then
+    create_model $2 $3
+elif [ "$1" = "type" ]
+then
+    create_type $2 $3
+else
+    echo "Unknown command $1"
+fi
